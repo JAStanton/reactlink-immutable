@@ -5,6 +5,11 @@ function ReactLink(value, requestChange) {
   this.requestChange = requestChange;
 }
 
+function isFunction(functionToCheck) {
+ var getType = {};
+ return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
+
 // Per the React docs, this.state MUST be a plain JS object, and not an Immutable collection,
 // because React's setState API expects an object literal and will merge it
 // (Object.assign) with the previous state.
@@ -15,6 +20,11 @@ function ReactLink(value, requestChange) {
 var LinkedImmutableStateMixin = {
   linkImmutableState: function linkImmutableState(key, keepImmutable) {
     var setState = this.setState.bind(this);
+    var reactLinkOnUpdate = function() {
+      if (isFunction(this.reactLinkOnUpdate)) {
+        this.reactLinkOnUpdate();
+      }
+    };
     if (!key) throw new Error('Missing key');
     if (key instanceof Array) {
       if (!key.length) throw new Error('Empty array passed as key');
@@ -40,7 +50,7 @@ var LinkedImmutableStateMixin = {
       valueToReturn,
       function requestChange(valueToSetInState) {
         partialState[first] = hasImmutable ? firstItem.setIn(key, valueToSetInState) : valueToSetInState;
-        setState(partialState);
+        setState(partialState, reactLinkOnUpdate);
       }
     );
   }
